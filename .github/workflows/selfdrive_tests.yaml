@@ -111,6 +111,23 @@ jobs:
     - name: Test openpilot environment
       run: . .venv/bin/activate && scons -h
 
+  docker_push_multiarch:
+    name: docker push multiarch tag
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/openpilot'
+    needs: [build]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+    - name: Setup docker
+      run: |
+        $DOCKER_LOGIN
+    - name: Merge x64 and arm64 tags
+      run: |
+        export PUSH_IMAGE=true
+        scripts/retry.sh selfdrive/test/docker_tag_multiarch.sh base x86_64 aarch64
+
   static_analysis:
     name: static analysis
     runs-on: ${{ ((github.repository == 'commaai/openpilot') &&
